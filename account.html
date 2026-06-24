@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tournyx – Account</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+    :root {
+        --primary-bg: #05020C;
+        --card-bg: rgba(15, 8, 30, 0.7);
+        --card-border: rgba(255,255,255,0.08);
+        --accent-purple: #BD00FF;
+        --accent-cyan: #00F2FF;
+        --accent-gold: #FFD700;
+        --accent-green: #00FF7F;
+        --accent-red: #FF3B5C;
+        --font-head: 'Orbitron', sans-serif;
+        --font-body: 'Rajdhani', sans-serif;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+        background: var(--primary-bg); color: white; font-family: var(--font-body);
+        min-height: 100vh; overflow-x: hidden;
+    }
+    .bg-gradient {
+        position:fixed; inset:0; z-index:0; pointer-events:none;
+        background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(189,0,255,0.25) 0%, transparent 70%),
+                    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,242,255,0.12) 0%, transparent 60%),
+                    radial-gradient(ellipse 50% 50% at 20% 60%, rgba(189,0,255,0.1) 0%, transparent 60%);
+    }
+    .scanlines {
+        position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.03;
+        background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,1) 2px, rgba(255,255,255,1) 4px);
+    }
+    canvas#particles-canvas { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.4; }
+
+    /* ── VIEW SWITCHING ─────────────────────────────────────────── */
+    .view { display:none; }
+    .view.active { display:block; }
+
+    /* ══════════════════════ REGISTRATION VIEW ══════════════════════ */
+    #view-register.active {
+        min-height:100vh; display:flex; align-items:center; justify-content:center;
+        padding: clamp(16px, 5vw, 24px);
+    }
+    .reg-wrap { position:relative; z-index:1; width:100%; max-width:440px; }
+    .logo-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom: clamp(16px, 4vw, 22px); }
+    .logo-text { font-family:var(--font-head); font-size:1.4rem; font-weight:900; letter-spacing:3px;
+        background:linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+        -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+    .reg-card {
+        background:var(--card-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+        border:1px solid var(--accent-cyan); border-radius:24px;
+        box-shadow:0 15px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,242,255,0.08);
+        padding: clamp(24px, 6vw, 34px) clamp(18px, 5vw, 28px) clamp(22px, 5vw, 30px);
+        position:relative; overflow:hidden;
+        animation:riseUp 0.6s ease backwards;
+    }
+    @keyframes riseUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+    .reg-card::before {
+        content:''; position:absolute; top:-60%; right:-20%;
+        width:260px; height:260px; border-radius:50%;
+        background:radial-gradient(circle, rgba(189,0,255,0.18), transparent 70%);
+        pointer-events:none;
+    }
+
+    .reg-head { text-align:center; margin-bottom: clamp(20px, 5vw, 26px); position:relative; z-index:1; }
+    .reg-head h1 {
+        font-family:var(--font-head); font-weight:900; letter-spacing:2px;
+        font-size: clamp(1.05rem, 4.5vw, 1.3rem);
+        margin-bottom:8px; text-transform:uppercase; line-height:1.3;
+    }
+    .reg-head p { font-size: clamp(0.78rem, 3vw, 0.85rem); color:#9a93ab; letter-spacing:0.3px; line-height:1.5; }
+
+    .field { margin-bottom: clamp(14px, 3.5vw, 18px); position:relative; z-index:1; }
+    label {
+        display:flex; align-items:center; gap:7px;
+        font-family:var(--font-head); font-size:0.62rem; font-weight:700;
+        letter-spacing:1.5px; text-transform:uppercase; color:#aaa;
+        margin-bottom:8px;
+    }
+    label i { color:var(--accent-cyan); font-size:0.7rem; width:14px; text-align:center; flex-shrink:0; }
+
+    .input-wrap { position:relative; }
+    input {
+        width:100%; padding:12px 14px; font-family:var(--font-body); font-weight:500;
+        background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12);
+        border-radius:12px; color:white; font-size:0.95rem;
+        transition:0.3s; outline:none;
+        -webkit-appearance:none; appearance:none;
+    }
+    input::placeholder { color:#555; }
+    input:focus { border-color:var(--accent-cyan); box-shadow:0 0 15px rgba(0,242,255,0.2); background:rgba(0,242,255,0.04); }
+    input.invalid { border-color:var(--accent-red); }
+    input.invalid:focus { box-shadow:0 0 15px rgba(255,59,92,0.25); }
+    input.valid { border-color:var(--accent-green); }
+    /* room for the valid-icon / toggle-pw button on the right so text never collides with it */
+    #name, #email, #phone { padding-right:38px; }
+    #password, #confirmPassword { padding-right:58px; }
+
+    .valid-icon {
+        position:absolute; right:14px; top:50%; transform:translateY(-50%);
+        color:var(--accent-green); font-size:0.85rem; display:none;
+        text-shadow:0 0 8px rgba(0,255,127,0.6); pointer-events:none;
+    }
+    .valid-icon.show { display:block; }
+
+    .toggle-pw {
+        position:absolute; right:10px; top:50%; transform:translateY(-50%);
+        background:none; border:none; color:#777; font-family:var(--font-head);
+        font-size:0.6rem; letter-spacing:1px; cursor:pointer; padding:6px 6px; transition:0.3s;
+        min-width:40px; text-align:right;
+    }
+    .toggle-pw:hover { color:var(--accent-cyan); }
+
+    .error-msg {
+        display:flex; align-items:flex-start; gap:6px;
+        color:var(--accent-red); font-size:0.72rem; font-weight:600; line-height:1.4;
+        margin-top:0; max-height:0; overflow:hidden;
+        transition:max-height 0.25s ease, margin-top 0.25s ease;
+    }
+    .error-msg.show { max-height:40px; margin-top:7px; }
+    .error-msg i { margin-top:2px; flex-shrink:0; }
+
+    .strength-bar { height:4px; border-radius:2px; background:rgba(255,255,255,0.08); margin-top:9px; overflow:hidden; }
+    .strength-bar-fill { height:100%; width:0%; border-radius:2px; transition:width 0.25s ease, background 0.25s ease; }
+    .strength-label {
+        font-family:var(--font-head); font-size:0.6rem; letter-spacing:1px;
+        color:#666; margin-top:5px; text-transform:uppercase;
+    }
+
+    .submit-btn {
+        width:100%; padding: clamp(13px, 3vw, 14px); margin-top: clamp(6px, 2vw, 10px);
+        background:linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+        color:#05020C; border:none; border-radius:14px;
+        font-family:var(--font-head); font-size:0.85rem; font-weight:900; letter-spacing:2px;
+        text-transform:uppercase; cursor:pointer; transition:0.3s;
+        box-shadow:0 10px 25px rgba(189,0,255,0.35); position:relative; z-index:1;
+        display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .submit-btn:hover { transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,242,255,0.4); }
+    .submit-btn:active { transform:scale(0.98); }
+    .submit-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    .success-banner {
+        display:none; align-items:center; gap:10px;
+        background:rgba(0,255,127,0.1); border:1px solid rgba(0,255,127,0.4);
+        color:var(--accent-green); padding:13px 16px; border-radius:12px;
+        font-size:0.82rem; font-weight:600; line-height:1.4; margin-bottom: clamp(16px, 4vw, 20px);
+        text-shadow:0 0 10px rgba(0,255,127,0.3); position:relative; z-index:1;
+    }
+    .success-banner.show { display:flex; animation:fadeInDown 0.4s ease; }
+    @keyframes fadeInDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+    .success-banner i { font-size:1rem; flex-shrink:0; filter:drop-shadow(0 0 8px var(--accent-green)); }
+
+    .footer-note {
+        text-align:center; margin-top: clamp(18px, 4vw, 24px); font-size:0.82rem; color:#777;
+        position:relative; z-index:1; line-height:1.6;
+    }
+    .footer-note a {
+        color:var(--accent-cyan); text-decoration:none; font-weight:600;
+        text-shadow:0 0 8px rgba(0,242,255,0.3); cursor:pointer;
+    }
+    .footer-note a:hover { text-decoration:underline; }
+
+    /* Extra-small phones */
+    @media(max-width:360px){
+        .logo-text { font-size:1.2rem; letter-spacing:2px; }
+        .toggle-pw { font-size:0.55rem; }
+    }
+
+    /* ══════════════════════ DASHBOARD VIEW ══════════════════════ */
+    .top-header {
+        position:sticky; top:0; z-index:100;
+        background: rgba(5,2,12,0.85);
+        backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+        border-bottom:1px solid rgba(255,255,255,0.06);
+        padding: env(safe-area-inset-top) 0 0;
+    }
+    .header-wrapper {
+        display:flex; align-items:center; justify-content:space-between;
+        padding: 12px clamp(16px, 4vw, 18px); gap:10px; max-width:1100px; margin:0 auto;
+    }
+    .logout-btn {
+        background:rgba(255,59,92,0.1); border:1px solid rgba(255,59,92,0.4);
+        color:var(--accent-red); font-family:var(--font-head); font-size:0.65rem;
+        letter-spacing:1px; padding:8px 16px; border-radius:20px; cursor:pointer;
+        transition:0.3s; display:flex; align-items:center; gap:6px; flex-shrink:0;
+    }
+    .logout-btn:hover { background:rgba(255,59,92,0.2); box-shadow:0 0 15px rgba(255,59,92,0.25); }
+
+    .dash-main {
+        max-width:1100px; margin:0 auto; position:relative; z-index:1;
+        padding: clamp(20px, 5vw, 28px) clamp(16px, 4vw, 18px) clamp(40px, 8vw, 60px);
+    }
+
+    .welcome-banner {
+        background:linear-gradient(135deg, rgba(189,0,255,0.15), rgba(0,242,255,0.08));
+        border:1px solid rgba(189,0,255,0.3); border-radius:18px;
+        padding: clamp(20px, 5vw, 26px) clamp(18px, 5vw, 24px);
+        margin-bottom: clamp(22px, 5vw, 28px); position:relative; overflow:hidden;
+        animation:riseUp 0.5s ease backwards;
+    }
+    .welcome-banner::before {
+        content:''; position:absolute; top:-50%; right:-10%;
+        width:240px; height:240px; border-radius:50%;
+        background:radial-gradient(circle, rgba(0,242,255,0.18), transparent 70%);
+        pointer-events:none;
+    }
+    .welcome-banner h1 {
+        font-family:var(--font-head); font-weight:900; letter-spacing:1px;
+        font-size: clamp(1.05rem, 4.5vw, 1.3rem);
+        margin-bottom:6px; position:relative; z-index:1; line-height:1.35;
+        overflow-wrap:break-word;
+    }
+    .welcome-banner h1 span { color:var(--accent-cyan); text-shadow:0 0 15px rgba(0,242,255,0.5); }
+    .welcome-banner p { color:#aaa; font-size: clamp(0.82rem, 3vw, 0.9rem); position:relative; z-index:1; line-height:1.5; }
+
+    .section-label {
+        font-family:var(--font-head); font-size:0.7rem; letter-spacing:3px; color:#666;
+        text-transform:uppercase; margin-bottom:14px; margin-top:6px;
+    }
+
+    .profile-card {
+        background:var(--card-bg); backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
+        border:1px solid var(--accent-cyan); border-radius:18px;
+        box-shadow:inset 0 0 30px rgba(0,242,255,0.06);
+        padding: clamp(20px, 5vw, 24px); margin-bottom: clamp(24px, 5vw, 30px);
+        display:flex; gap: clamp(16px, 4vw, 20px); align-items:center;
+        flex-wrap:wrap; animation:riseUp 0.5s ease 0.1s backwards;
+    }
+    .profile-avatar {
+        width:72px; height:72px; border-radius:50%; flex-shrink:0;
+        background:linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+        display:flex; align-items:center; justify-content:center;
+        font-family:var(--font-head); font-size:1.6rem; font-weight:900; color:#05020C;
+        box-shadow:0 0 25px rgba(189,0,255,0.4);
+    }
+    .profile-details { flex:1; min-width:0; width:100%; }
+    .profile-details .p-name {
+        font-family:var(--font-head); font-size:1.15rem; font-weight:700; margin-bottom:12px;
+        overflow-wrap:break-word;
+    }
+    .detail-row {
+        display:flex; align-items:flex-start; gap:10px; font-size:0.88rem; color:#bbb;
+        padding:6px 0; flex-wrap:wrap;
+    }
+    .detail-row i { color:var(--accent-cyan); width:16px; text-align:center; font-size:0.8rem; margin-top:3px; flex-shrink:0; }
+    .detail-row .d-label { color:#777; width:70px; flex-shrink:0; font-weight:600; }
+    .detail-row .d-value { color:white; font-weight:500; word-break:break-word; flex:1; min-width:0; }
+
+    .cards-grid {
+        display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+        gap: clamp(12px, 3vw, 16px); margin-bottom:10px;
+    }
+    .info-card {
+        background:var(--card-bg); backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
+        border:1px solid var(--card-border); border-radius:16px;
+        padding: clamp(16px, 4vw, 20px); transition:0.3s; cursor:default; position:relative; overflow:hidden;
+        animation:riseUp 0.5s ease backwards; min-width:0;
+    }
+    .info-card:nth-child(1){ animation-delay:0.15s; }
+    .info-card:nth-child(2){ animation-delay:0.25s; }
+    .info-card:nth-child(3){ animation-delay:0.35s; }
+    .info-card:nth-child(4){ animation-delay:0.45s; }
+    .info-card:hover { transform:translateY(-4px); border-color:rgba(255,255,255,0.2); box-shadow:0 10px 30px rgba(0,0,0,0.4); }
+
+    .info-card .ic-icon {
+        width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+        font-size:1.1rem; margin-bottom:14px;
+    }
+    .info-card.purple .ic-icon { background:rgba(189,0,255,0.15); color:var(--accent-purple); box-shadow:0 0 15px rgba(189,0,255,0.2); }
+    .info-card.cyan .ic-icon { background:rgba(0,242,255,0.15); color:var(--accent-cyan); box-shadow:0 0 15px rgba(0,242,255,0.2); }
+    .info-card.gold .ic-icon { background:rgba(255,215,0,0.15); color:var(--accent-gold); box-shadow:0 0 15px rgba(255,215,0,0.2); }
+    .info-card.green .ic-icon { background:rgba(0,255,127,0.15); color:var(--accent-green); box-shadow:0 0 15px rgba(0,255,127,0.2); }
+
+    .info-card .ic-val {
+        font-family:var(--font-head); font-size:1.5rem; font-weight:900; margin-bottom:4px;
+        overflow-wrap:break-word;
+    }
+    .info-card.purple .ic-val { color:var(--accent-purple); text-shadow:0 0 12px rgba(189,0,255,0.4); }
+    .info-card.cyan .ic-val { color:var(--accent-cyan); text-shadow:0 0 12px rgba(0,242,255,0.4); }
+    .info-card.gold .ic-val { color:var(--accent-gold); text-shadow:0 0 12px rgba(255,215,0,0.4); }
+    .info-card.green .ic-val { color:var(--accent-green); text-shadow:0 0 12px rgba(0,255,127,0.4); }
+
+    .info-card .ic-lbl {
+        font-size:0.72rem; color:#999; text-transform:uppercase; letter-spacing:1px; font-weight:600;
+    }
+    .info-card .ic-sub {
+        font-size:0.78rem; color:#666; margin-top:8px; line-height:1.5;
+    }
+
+    .empty-state {
+        text-align:center; padding: clamp(40px, 10vw, 60px) clamp(16px, 4vw, 20px);
+        position:relative; z-index:1; animation:riseUp 0.5s ease backwards;
+    }
+    .empty-state i { font-size:2.2rem; color:var(--accent-purple); margin-bottom:16px; filter:drop-shadow(0 0 15px rgba(189,0,255,0.4)); }
+    .empty-state h2 { font-family:var(--font-head); font-size:1.1rem; letter-spacing:1px; margin-bottom:10px; line-height:1.4; }
+    .empty-state p { color:#888; font-size:0.9rem; margin-bottom:22px; line-height:1.5; }
+    .empty-state a {
+        display:inline-flex; align-items:center; gap:8px;
+        background:linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+        color:#05020C; text-decoration:none; font-family:var(--font-head); font-size:0.75rem;
+        font-weight:900; letter-spacing:1.5px; text-transform:uppercase;
+        padding:13px 26px; border-radius:14px; box-shadow:0 10px 25px rgba(189,0,255,0.35);
+        transition:0.3s; cursor:pointer; border:none;
+    }
+    .empty-state a:hover { transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,242,255,0.4); }
+
+    /* Tablet: tighten the grid a touch so 2-up cards breathe properly */
+    @media(min-width:560px) and (max-width:899px){
+        .cards-grid { grid-template-columns:repeat(2, 1fr); }
+    }
+
+    /* Mobile phones */
+    @media(max-width:480px){
+        .header-wrapper { padding:10px clamp(14px, 4vw, 16px); }
+        .logout-btn { font-size:0.6rem; padding:7px 12px; }
+        .profile-card { flex-direction:column; text-align:center; }
+        .profile-details { text-align:center; }
+        .detail-row { justify-content:center; }
+        .detail-row .d-label { width:auto; }
+        .cards-grid { grid-template-columns:1fr; }
+    }
+
+    /* Extra-small phones */
+    @media(max-width:360px){
+        .profile-avatar { width:60px; height:60px; font-size:1.3rem; }
+        .welcome-banner, .profile-card, .info-card { border-radius:14px; }
+    }
+</style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="scanlines"></div>
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- ══════════════════════ VIEW 1: REGISTRATION ══════════════════════ -->
+    <div class="view active" id="view-register">
+        <div class="reg-wrap">
+            <div class="logo-row">
+                <span class="logo-text">TOURNYX</span>
+            </div>
+
+            <div class="reg-card">
+                <div class="reg-head">
+                    <h1>Create Your Account</h1>
+                    <p>Join the arena. Compete. Climb the leaderboard.</p>
+                </div>
+
+                <div class="success-banner" id="successBanner">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Account created successfully. Redirecting to your dashboard…</span>
+                </div>
+
+                <form id="registerForm" novalidate>
+                    <div class="field">
+                        <label for="name"><i class="fa-solid fa-user"></i>Name</label>
+                        <div class="input-wrap">
+                            <input type="text" id="name" name="name" placeholder="Your full name" autocomplete="name">
+                            <i class="fa-solid fa-check valid-icon" id="nameValidIcon"></i>
+                        </div>
+                        <div class="error-msg" id="nameError"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+                    </div>
+
+                    <div class="field">
+                        <label for="email"><i class="fa-solid fa-envelope"></i>Email</label>
+                        <div class="input-wrap">
+                            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email">
+                            <i class="fa-solid fa-check valid-icon" id="emailValidIcon"></i>
+                        </div>
+                        <div class="error-msg" id="emailError"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+                    </div>
+
+                    <div class="field">
+                        <label for="phone"><i class="fa-solid fa-phone"></i>Phone Number</label>
+                        <div class="input-wrap">
+                            <input type="tel" id="phone" name="phone" placeholder="10-digit phone number" maxlength="10" autocomplete="tel" inputmode="numeric">
+                            <i class="fa-solid fa-check valid-icon" id="phoneValidIcon"></i>
+                        </div>
+                        <div class="error-msg" id="phoneError"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+                    </div>
+
+                    <div class="field">
+                        <label for="password"><i class="fa-solid fa-lock"></i>Password</label>
+                        <div class="input-wrap">
+                            <input type="password" id="password" name="password" placeholder="At least 8 characters" autocomplete="new-password">
+                            <button type="button" class="toggle-pw" data-target="password">SHOW</button>
+                        </div>
+                        <div class="strength-bar"><div class="strength-bar-fill" id="strengthFill"></div></div>
+                        <div class="strength-label" id="strengthLabel">&nbsp;</div>
+                        <div class="error-msg" id="passwordError"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+                    </div>
+
+                    <div class="field">
+                        <label for="confirmPassword"><i class="fa-solid fa-lock"></i>Confirm Password</label>
+                        <div class="input-wrap">
+                            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" autocomplete="new-password">
+                            <button type="button" class="toggle-pw" data-target="confirmPassword">SHOW</button>
+                        </div>
+                        <div class="error-msg" id="confirmPasswordError"><i class="fa-solid fa-triangle-exclamation"></i><span></span></div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <i class="fa-solid fa-bolt"></i>&nbsp; Create Account
+                    </button>
+                </form>
+
+                <p class="footer-note">Already registered? <a id="goToDashboardLink">Go to dashboard</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════ VIEW 2: DASHBOARD ══════════════════════ -->
+    <div class="view" id="view-dashboard">
+        <header class="top-header">
+            <div class="header-wrapper">
+                <span class="logo-text">TOURNYX</span>
+                <button class="logout-btn" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> LOGOUT</button>
+            </div>
+        </header>
+
+        <main class="dash-main" id="dashMain">
+            <!-- Content injected by JS -->
+        </main>
+    </div>
+
+<script>
+    // ── PARTICLE BACKGROUND (shared across both views) ────────────────────
+    (function initParticles(){
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        function spawn(){
+            particles = [];
+            const count = Math.floor((window.innerWidth * window.innerHeight) / 18000);
+            for (let i=0;i<count;i++){
+                particles.push({
+                    x: Math.random()*canvas.width,
+                    y: Math.random()*canvas.height,
+                    r: Math.random()*1.6 + 0.4,
+                    vy: Math.random()*0.3 + 0.05,
+                    alpha: Math.random()*0.5 + 0.1,
+                    color: Math.random() > 0.5 ? '0,242,255' : '189,0,255'
+                });
+            }
+        }
+        function tick(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            particles.forEach(p=>{
+                p.y -= p.vy;
+                if (p.y < -5) p.y = canvas.height + 5;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
+                ctx.fill();
+            });
+            requestAnimationFrame(tick);
+        }
+        window.addEventListener('resize', ()=>{ resize(); spawn(); });
+        resize(); spawn(); tick();
+    })();
+
+    // ── VIEW SWITCHING ──────────────────────────────────────────────────
+    function showView(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    // ── FORM VALIDATION (registration view) ─────────────────────────────
+    const form = document.getElementById('registerForm');
+    const fields = {
+        name: document.getElementById('name'),
+        email: document.getElementById('email'),
+        phone: document.getElementById('phone'),
+        password: document.getElementById('password'),
+        confirmPassword: document.getElementById('confirmPassword'),
+    };
+    const errors = {
+        name: document.getElementById('nameError'),
+        email: document.getElementById('emailError'),
+        phone: document.getElementById('phoneError'),
+        password: document.getElementById('passwordError'),
+        confirmPassword: document.getElementById('confirmPasswordError'),
+    };
+    const validIcons = {
+        name: document.getElementById('nameValidIcon'),
+        email: document.getElementById('emailValidIcon'),
+        phone: document.getElementById('phoneValidIcon'),
+    };
+    const successBanner = document.getElementById('successBanner');
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthLabel = document.getElementById('strengthLabel');
+
+    function setError(field, message) {
+        fields[field].classList.add('invalid');
+        fields[field].classList.remove('valid');
+        errors[field].querySelector('span').textContent = message;
+        errors[field].classList.add('show');
+        if (validIcons[field]) validIcons[field].classList.remove('show');
+    }
+
+    function clearError(field, markValid) {
+        fields[field].classList.remove('invalid');
+        errors[field].classList.remove('show');
+        if (markValid) {
+            fields[field].classList.add('valid');
+            if (validIcons[field]) validIcons[field].classList.add('show');
+        }
+    }
+
+    function validateName() {
+        const value = fields.name.value.trim();
+        if (!value) { setError('name', 'Name is required.'); return false; }
+        if (value.length < 2) { setError('name', 'Name must be at least 2 characters.'); return false; }
+        clearError('name', true);
+        return true;
+    }
+
+    function validateEmail() {
+        const value = fields.email.value.trim();
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!value) { setError('email', 'Email is required.'); return false; }
+        if (!re.test(value)) { setError('email', 'Enter a valid email address.'); return false; }
+        clearError('email', true);
+        return true;
+    }
+
+    function validatePhone() {
+        const value = fields.phone.value.trim();
+        const digitsOnly = value.replace(/[^\d]/g, '');
+        if (!value) { setError('phone', 'Phone number is required.'); return false; }
+        if (digitsOnly.length !== 10) { setError('phone', 'Phone number must contain exactly 10 digits.'); return false; }
+        clearError('phone', true);
+        return true;
+    }
+
+    function getPasswordStrength(pw) {
+        let score = 0;
+        if (pw.length >= 8) score++;
+        if (pw.length >= 12) score++;
+        if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+        if (/\d/.test(pw)) score++;
+        if (/[^A-Za-z0-9]/.test(pw)) score++;
+        return score;
+    }
+
+    function updateStrengthMeter() {
+        const pw = fields.password.value;
+        if (!pw) {
+            strengthFill.style.width = '0%';
+            strengthFill.style.background = 'transparent';
+            strengthFill.style.boxShadow = 'none';
+            strengthLabel.textContent = '\u00A0';
+            return;
+        }
+        const score = getPasswordStrength(pw);
+        const pct = (score / 5) * 100;
+        let color = 'var(--accent-red)';
+        let glow = 'rgba(255,59,92,0.5)';
+        let label = 'Weak';
+        if (score >= 4) { color = 'var(--accent-green)'; glow = 'rgba(0,255,127,0.5)'; label = 'Strong'; }
+        else if (score >= 2) { color = 'var(--accent-gold)'; glow = 'rgba(255,215,0,0.5)'; label = 'Medium'; }
+        strengthFill.style.width = pct + '%';
+        strengthFill.style.background = color;
+        strengthFill.style.boxShadow = `0 0 8px ${glow}`;
+        strengthLabel.textContent = label;
+        strengthLabel.style.color = color;
+    }
+
+    function validatePassword() {
+        const value = fields.password.value;
+        if (!value) { setError('password', 'Password is required.'); return false; }
+        if (value.length < 8) { setError('password', 'Password must be at least 8 characters.'); return false; }
+        if (!/[A-Za-z]/.test(value) || !/\d/.test(value)) { setError('password', 'Password must include letters and numbers.'); return false; }
+        clearError('password', false);
+        return true;
+    }
+
+    function validateConfirmPassword() {
+        const value = fields.confirmPassword.value;
+        if (!value) { setError('confirmPassword', 'Please confirm your password.'); return false; }
+        if (value !== fields.password.value) { setError('confirmPassword', 'Passwords do not match.'); return false; }
+        clearError('confirmPassword', true);
+        return true;
+    }
+
+    fields.name.addEventListener('blur', validateName);
+    fields.email.addEventListener('blur', validateEmail);
+    fields.phone.addEventListener('blur', validatePhone);
+    fields.phone.addEventListener('input', () => {
+        fields.phone.value = fields.phone.value.replace(/[^\d]/g, '').slice(0, 10);
+    });
+    fields.password.addEventListener('input', () => { updateStrengthMeter(); validatePassword(); if (fields.confirmPassword.value) validateConfirmPassword(); });
+    fields.confirmPassword.addEventListener('input', validateConfirmPassword);
+
+    document.querySelectorAll('.toggle-pw').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const isPw = input.type === 'password';
+            input.type = isPw ? 'text' : 'password';
+            btn.textContent = isPw ? 'HIDE' : 'SHOW';
+        });
+    });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        successBanner.classList.remove('show');
+
+        const validations = [
+            validateName(),
+            validateEmail(),
+            validatePhone(),
+            validatePassword(),
+            validateConfirmPassword(),
+        ];
+
+        const allValid = validations.every(Boolean);
+
+        if (allValid) {
+            const formData = {
+                name: fields.name.value.trim(),
+                email: fields.email.value.trim(),
+                phone: fields.phone.value.trim(),
+                registeredAt: new Date().toISOString(),
+            };
+
+            // Persist user details for the dashboard view to read.
+            // Note: password is intentionally NOT stored — never keep plaintext
+            // passwords in localStorage, even for a demo/prototype.
+            localStorage.setItem('tournyx_user', JSON.stringify(formData));
+
+            successBanner.classList.add('show');
+            form.reset();
+            updateStrengthMeter();
+            Object.values(fields).forEach(f => f.classList.remove('valid','invalid'));
+            Object.values(validIcons).forEach(icon => icon.classList.remove('show'));
+
+            setTimeout(() => {
+                renderDashboard();
+                showView('view-dashboard');
+            }, 1200);
+        } else {
+            const firstInvalid = Object.keys(fields).find(key => fields[key].classList.contains('invalid'));
+            if (firstInvalid) fields[firstInvalid].focus();
+        }
+    });
+
+    document.getElementById('goToDashboardLink').addEventListener('click', () => {
+        renderDashboard();
+        showView('view-dashboard');
+    });
+
+    // ── DASHBOARD VIEW ───────────────────────────────────────────────────
+    function getInitials(name) {
+        if (!name) return '?';
+        const parts = name.trim().split(/\s+/);
+        const initials = parts.length > 1
+            ? parts[0][0] + parts[parts.length - 1][0]
+            : parts[0].slice(0, 2);
+        return initials.toUpperCase();
+    }
+
+    function formatDate(isoString) {
+        if (!isoString) return '—';
+        const d = new Date(isoString);
+        return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }) +
+               ' · ' + d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+    }
+
+    function maskPhone(phone) {
+        if (!phone || phone.length < 4) return phone || '—';
+        return phone.slice(0, 2) + '••••' + phone.slice(-4);
+    }
+
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderDashboard() {
+        const raw = localStorage.getItem('tournyx_user');
+        const main = document.getElementById('dashMain');
+
+        if (!raw) {
+            main.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-user-slash"></i>
+                    <h2>NO ACTIVE SESSION FOUND</h2>
+                    <p>Create an account to see your dashboard come to life.</p>
+                    <a id="emptyStateCta"><i class="fa-solid fa-bolt"></i> Create Account</a>
+                </div>`;
+            document.getElementById('emptyStateCta').addEventListener('click', () => showView('view-register'));
+            return;
+        }
+
+        let user;
+        try { user = JSON.parse(raw); } catch (e) { user = null; }
+
+        if (!user || !user.name) {
+            main.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <h2>SESSION DATA CORRUPTED</h2>
+                    <p>We couldn't read your account details. Please register again.</p>
+                    <a id="emptyStateCta"><i class="fa-solid fa-bolt"></i> Create Account</a>
+                </div>`;
+            document.getElementById('emptyStateCta').addEventListener('click', () => showView('view-register'));
+            return;
+        }
+
+        const firstName = user.name.trim().split(/\s+/)[0];
+
+        main.innerHTML = `
+            <div class="welcome-banner">
+                <h1>Welcome back, <span>${escapeHtml(firstName)}</span> ⚡</h1>
+                <p>Here's a snapshot of your Tournyx account.</p>
+            </div>
+
+            <p class="section-label">Account Profile</p>
+            <div class="profile-card">
+                <div class="profile-avatar">${escapeHtml(getInitials(user.name))}</div>
+                <div class="profile-details">
+                    <div class="p-name">${escapeHtml(user.name)}</div>
+                    <div class="detail-row"><i class="fa-solid fa-envelope"></i><span class="d-label">Email</span><span class="d-value">${escapeHtml(user.email)}</span></div>
+                    <div class="detail-row"><i class="fa-solid fa-phone"></i><span class="d-label">Phone</span><span class="d-value">${escapeHtml(user.phone)}</span></div>
+                    <div class="detail-row"><i class="fa-solid fa-calendar"></i><span class="d-label">Joined</span><span class="d-value">${escapeHtml(formatDate(user.registeredAt))}</span></div>
+                </div>
+            </div>
+
+            <p class="section-label">Overview</p>
+            <div class="cards-grid">
+                <div class="info-card purple">
+                    <div class="ic-icon"><i class="fa-solid fa-id-card"></i></div>
+                    <div class="ic-val">${escapeHtml(user.name)}</div>
+                    <div class="ic-lbl">Registered Name</div>
+                    <div class="ic-sub">The name attached to your Tournyx profile and leaderboard listing.</div>
+                </div>
+                <div class="info-card cyan">
+                    <div class="ic-icon"><i class="fa-solid fa-envelope"></i></div>
+                    <div class="ic-val" style="font-size:1.1rem;word-break:break-all;">${escapeHtml(user.email)}</div>
+                    <div class="ic-lbl">Email Address</div>
+                    <div class="ic-sub">Used for sign-in and tournament notifications.</div>
+                </div>
+                <div class="info-card gold">
+                    <div class="ic-icon"><i class="fa-solid fa-phone"></i></div>
+                    <div class="ic-val">${escapeHtml(maskPhone(user.phone))}</div>
+                    <div class="ic-lbl">Phone Number</div>
+                    <div class="ic-sub">Verified contact number on file (partially masked for privacy).</div>
+                </div>
+                <div class="info-card green">
+                    <div class="ic-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                    <div class="ic-val" style="font-size:1.1rem;">${escapeHtml(formatDate(user.registeredAt))}</div>
+                    <div class="ic-lbl">Account Created</div>
+                    <div class="ic-sub">Date and time your Tournyx account was registered.</div>
+                </div>
+            </div>
+        `;
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('tournyx_user');
+        showView('view-register');
+    });
+
+    // ── INIT ─────────────────────────────────────────────────────────────
+    // If a session already exists when the page loads, jump straight to the dashboard.
+    window.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('tournyx_user')) {
+            renderDashboard();
+            showView('view-dashboard');
+        }
+    });
+</script>
+</body>
+</html>
